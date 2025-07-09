@@ -6,7 +6,7 @@ Description: Root stack to deploy all infrastructure components for the Gallery 
 Parameters:
   TemplateBucket:
     Type: String
-    Default: https://wk5-gallery-infra.s3.eu-west-1.amazonaws.com/infra
+    Default: https://wk5-gallery-infra.s3.eu-west-1.amazonaws.com
     Description: S3 bucket URL prefix where all child templates are stored (no trailing slash)
 
 Resources:
