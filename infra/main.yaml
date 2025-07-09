@@ -11,7 +11,7 @@ Parameters:
   TemplateS3BaseURL:
     Description: "S3 Base URL where templates are stored"
     Type: String
-    Default: https://wk5-gallery-infra.s3.eu-west-1.amazonaws.com/infra
+    Default: https://wk5-gallery-app-bucket.s3.eu-west-1.amazonaws.com/infra
   ECRImageUri:
     Type: String
     Default: 124355655853.dkr.ecr.eu-west-1.amazonaws.com/wk5-gallery-app:latest
