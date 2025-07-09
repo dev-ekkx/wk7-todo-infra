@@ -1,58 +1,124 @@
----
-# main.yaml
-AWSTemplateFormatVersion: '2010-09-09'
-Description: Root stack to deploy all infrastructure components for the Gallery project
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Root Stack for ECS Java Gallery App with S3, Auto Scaling, ALB, Code Deploy
 
 Parameters:
-  TemplateBucket:
+  AppName:
     Type: String
-    Default: https://wk5-gallery-infra.s3.eu-west-1.amazonaws.com
-    Description: S3 bucket URL prefix where all child templates are stored (no trailing slash)
+    Default: gallery
+  LabTag:
+    Type: String
+    Default: week5_project
+  TemplateS3BaseURL:
+    Description: "S3 Base URL where templates are stored"
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: https://wk5-gallery-infra.s3.eu-west-1.amazonaws.com/infra
+  ECRImageUri:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: 124355655853.dkr.ecr.eu-west-1.amazonaws.com/wk5-gallery-app
 
 Resources:
-  VPCStack:
+  # Gallery S3 Stack
+  GalleryS3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/vpc.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/s3.yaml"
+      Parameters:
+        AppName: !Ref AppName
+        LabTag: !Ref LabTag
 
-  ECRStack:
+  # Gallery VPC Stack
+  GalleryVPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/ecr.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/vpc.yaml"
+      Parameters:
+        AppName: !Ref AppName
+        S3BucketName: !GetAtt GalleryS3Stack.Outputs.BucketName
+        LabTag: !Ref LabTag
 
-  IAMStack:
+  # Gallery Security Groups Stack
+  GallerySecurityGroupsStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: GalleryVPCStack
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/iam.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/security-groups.yaml"
+      Parameters:
+        AppName: !Ref AppName
+        LabTag: !Ref LabTag
+        VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
+        VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
 
-  ALBStack:
+  # Gallery ECS Application Stack
+  GalleryECSAppStack:
     Type: AWS::CloudFormation::Stack
+    # DependsOn: GalleryRDSStack
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/alb.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/alb.yaml"
+      Parameters:
+        VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
+        PublicSubnet1: !GetAtt GalleryVPCStack.Outputs.PublicSubnet1Id
+        PublicSubnet2: !GetAtt GalleryVPCStack.Outputs.PublicSubnet2Id
+        PrivateSubnet1: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet1Id
+        PrivateSubnet2: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet2Id
+        S3BucketName: !GetAtt GalleryS3Stack.Outputs.BucketName
+        VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
+        ECSSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.ECSSecurityGroup
+        ALBSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.ALBSecurityGroup
+        AppName: !Ref AppName
+        LabTag: !Ref LabTag
+        ECRImageUri: !Ref ECRImageUri
 
-  ECSStack:
+  # Gallery CodeDeploy Stack
+  GalleryCodeDeployStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: GalleryECSAppStack
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/ecs.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/code-deploy.yaml"
+      Parameters:
+        ClusterName: !GetAtt GalleryECSAppStack.Outputs.ClusterName
+        ServiceName: !GetAtt GalleryECSAppStack.Outputs.ServiceName
+        TargetGroup1: !GetAtt GalleryECSAppStack.Outputs.BlueTargetGroupName
+        TargetGroup2: !GetAtt GalleryECSAppStack.Outputs.GreenTargetGroupName
+        ListenerArn: !GetAtt GalleryECSAppStack.Outputs.ALBListenerArn
+        AppName: !Ref AppName
+        LabTag: !Ref LabTag
 
-  S3Stack:
+  # Gallery CodePipeline Stack
+  GalleryCodePipelineStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn: GalleryCodeDeployStack
     Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/s3.yaml"
+      TemplateURL: !Sub "${TemplateS3BaseURL}/code-pipeline.yaml"
+      Parameters:
+        AppName: !Ref AppName
+        LabTag: !Ref LabTag
+        CodeDeployApplication: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployAppName
+        CodeDeployDeploymentGroup: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployDeploymentGroupName
 
-  PipelineStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucket}/infra/pipeline.yaml"
+  # # Gallery RDS Stack
+  # GalleryRDSStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn:
+  #     - GalleryVPCStack
+  #     - GallerySecurityGroupsStack
+  #   Properties:
+  #     TemplateURL: !Sub "${TemplateS3BaseURL}/rds.yml"
+  #     Parameters:
+  #       AppName: !Ref AppName
+  #       LabTag: !Ref LabTag
+  #       VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
+  #       PrivateSubnet1: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet1Id
+  #       PrivateSubnet2: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet2Id
+  #       RdsSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.RdsSecurityGroup
+  #       RdsVPCEndpointSG: !GetAtt GallerySecurityGroupsStack.Outputs.RdsVPCEndpointSG
+  #       VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
 
 Outputs:
-  VPCOutput:
-    Value: !GetAtt VPCStack.Outputs.GalleryVPCId
-  ALBOutput:
-    Value: !GetAtt ALBStack.Outputs.ALBDNS
-  FrontendRepoOutput:
-    Value: !GetAtt ECRStack.Outputs.GalleryFrontendECR
-  BackendRepoOutput:
-    Value: !GetAtt ECRStack.Outputs.GalleryBackendECR
-  ClusterOutput:
-    Value: !GetAtt ECSStack.Outputs.GalleryClusterName
+  LoadBalancerDNS:
+    Description: Gallery ALB DNS to access app
+    Value: !GetAtt GalleryECSAppStack.Outputs.AppLoadBalancerDNS
+
+  S3BucketName:
+    Description: S3 bucket used by the Gallery app
+    Value: !GetAtt GalleryS3Stack.Outputs.BucketName
