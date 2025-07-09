@@ -1,0 +1,57 @@
+---
+# main.yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root stack to deploy all infrastructure components for the Gallery project
+
+Parameters:
+  TemplateBucket:
+    Type: String
+    Description: S3 bucket URL prefix where all child templates are stored (no trailing slash)
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/vpc.yaml"
+
+  ECRStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/ecr.yaml"
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/iam.yaml"
+
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/alb.yaml"
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/ecs.yaml"
+
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/s3.yaml"
+
+  PipelineStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucket}/infra/pipeline.yaml"
+
+Outputs:
+  VPCOutput:
+    Value: !GetAtt VPCStack.Outputs.GalleryVPCId
+  ALBOutput:
+    Value: !GetAtt ALBStack.Outputs.ALBDNS
+  FrontendRepoOutput:
+    Value: !GetAtt ECRStack.Outputs.GalleryFrontendECR
+  BackendRepoOutput:
+    Value: !GetAtt ECRStack.Outputs.GalleryBackendECR
+  ClusterOutput:
+    Value: !GetAtt ECSStack.Outputs.GalleryClusterName

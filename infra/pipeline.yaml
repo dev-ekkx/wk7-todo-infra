@@ -1,9 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodePipeline for CI/CD with GitHub and ECS blue/green deployment
+Description: CodePipeline with GitHub Actions-style source and ECR push
 
 Resources:
   GalleryArtifactBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketName: gallery-artifact-bucket
+      Tags:
+        - Key: lab
+          Value: week5_project
 
   GalleryPipelineRole:
     Type: AWS::IAM::Role
@@ -17,7 +22,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
-        - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
 
   GalleryPipeline:
@@ -45,7 +50,7 @@ Resources:
                 OAuthToken: <github-token>
         - Name: Build
           Actions:
-            - Name: BuildApp
+            - Name: BuildDockerImages
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -56,10 +61,10 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: <codebuild-project-name>
+                ProjectName: gallery-codebuild-project
         - Name: Deploy
           Actions:
-            - Name: DeployToECS
+            - Name: DeployBlueGreen
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -68,5 +73,5 @@ Resources:
               InputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ApplicationName: <codedeploy-app>
-                DeploymentGroupName: <ecs-deployment-group>
+                ApplicationName: gallery-codedeploy-app
+                DeploymentGroupName: gallery-deployment-group
