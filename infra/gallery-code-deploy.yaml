@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Gallery CodeDeploy ECS Application & Deployment Group
+
+Parameters:
+  AppName:
+    Type: String
+  LabTag:
+    Type: String
+  ClusterName:
+    Type: String
+  ServiceName:
+    Type: String
+  TargetGroup1:
+    Type: String
+  TargetGroup2:
+    Type: String
+  ListenerArn:
+    Type: String
+
+Resources:
+  # Gallery CodeDeploy IAM Role
+  GalleryCodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+        AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+                - Effect: Allow
+                  Principal:
+                    Service: codedeploy.amazonaws.com
+                  Action: sts:AssumeRole
+        Policies:
+            - PolicyName: GalleryCodeDeployInlinePolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Action:
+                        - ecs:*
+                        - elasticloadbalancing:*
+                        - cloudwatch:*
+                        - sns:*
+                        - s3:*
+                        - lambda:InvokeFunction
+                        - iam:PassRole
+                      Resource: "*"
+        Tags:
+        - Key: Name
+          Value: !Sub ${AppName}-codedeploy-role
+        - Key: Lab
+          Value: !Ref LabTag
+
+  # Gallery CodeDeploy Application
+  GalleryCodeDeployApp:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Sub ${AppName}-codedeploy-app
+      ComputePlatform: ECS
+
+  # Gallery Deployment Group
+  GalleryCodeDeployDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: 
+      - GalleryCodeDeployRole
+      - GalleryCodeDeployApp
+    Properties:
+      ApplicationName: !Ref GalleryCodeDeployApp
+      DeploymentGroupName: !Sub ${AppName}-codedeploy-group
+      DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce
+      ServiceRoleArn: !GetAtt GalleryCodeDeployRole.Arn
+      DeploymentStyle:
+        DeploymentType: BLUE_GREEN
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+      BlueGreenDeploymentConfiguration:
+        TerminateBlueInstancesOnDeploymentSuccess:
+          Action: TERMINATE
+          TerminationWaitTimeInMinutes: 5
+        DeploymentReadyOption:
+          ActionOnTimeout: CONTINUE_DEPLOYMENT
+          WaitTimeInMinutes: 0
+      LoadBalancerInfo:
+        TargetGroupPairInfoList:
+          - TargetGroups:
+              - Name: !Ref TargetGroup1
+              - Name: !Ref TargetGroup2
+            ProdTrafficRoute:
+              ListenerArns:
+                - !Ref ListenerArn
+      ECSServices:
+        - ClusterName: !Ref ClusterName
+          ServiceName: !Ref ServiceName
+            
+
+Outputs:
+  CodeDeployAppName:
+    Description: 'Gallery CodeDeploy Application for ECS Blue/Green'
+    Value: !Ref GalleryCodeDeployApp
+    Export:
+      Name: !Sub ${AppName}-codedeploy-app
+
+  CodeDeployDeploymentGroupName:
+    Description: 'Gallery Deployment Group for ECS Blue/Green'
+    Value: !Ref GalleryCodeDeployDeploymentGroup
+    Export:
+      Name: !Sub ${AppName}-codedeploy-group
