@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR Repositories for Gallery App
+
+Resources:
+  GalleryFrontendRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: gallery-frontend
+
+  GalleryBackendRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: gallery-backend
+
+Outputs:
+  GalleryFrontendECR:
+    Value: !GetAtt GalleryFrontendRepo.RepositoryUri
+  GalleryBackendECR:
+    Value: !GetAtt GalleryBackendRepo.RepositoryUri

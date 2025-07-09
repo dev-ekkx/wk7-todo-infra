@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: VPC with public and private subnets across 2 AZs using VPC endpoints
+
+Resources:
+  GalleryVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  GalleryInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GalleryAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref GalleryVPC
+      InternetGatewayId: !Ref GalleryInternetGateway
+
+  GalleryPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GalleryVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      MapPublicIpOnLaunch: true
+
+  GalleryPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GalleryVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+      MapPublicIpOnLaunch: true
+
+  GalleryPrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GalleryVPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+
+  GalleryPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GalleryVPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+
+  GalleryPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GalleryVPC
+
+  GalleryPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref GalleryPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref GalleryInternetGateway
+
+  GalleryPublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GalleryPublicSubnet1
+      RouteTableId: !Ref GalleryPublicRouteTable
+
+  GalleryPublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GalleryPublicSubnet2
+      RouteTableId: !Ref GalleryPublicRouteTable
+
+  GalleryPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GalleryVPC
+
+  GalleryPrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GalleryPrivateSubnet1
+      RouteTableId: !Ref GalleryPrivateRouteTable
+
+  GalleryPrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GalleryPrivateSubnet2
+      RouteTableId: !Ref GalleryPrivateRouteTable
+
+  GalleryVPCEndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcId: !Ref GalleryVPC
+      RouteTableIds:
+        - !Ref GalleryPrivateRouteTable
+      VpcEndpointType: Gateway
+
+  GalleryVPCEndpointSSM:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      VpcId: !Ref GalleryVPC
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref GalleryPrivateSubnet1
+        - !Ref GalleryPrivateSubnet2
+      SecurityGroupIds: []
+
+  GalleryVPCEndpointLogs:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      VpcId: !Ref GalleryVPC
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref GalleryPrivateSubnet1
+        - !Ref GalleryPrivateSubnet2
+      SecurityGroupIds: []
+
+Outputs:
+  VPCId:
+    Value: !Ref GalleryVPC
+  PublicSubnets:
+    Value: !Join [ ",", [ !Ref GalleryPublicSubnet1, !Ref GalleryPublicSubnet2 ] ]
+  PrivateSubnets:
+    Value: !Join [ ",", [ !Ref GalleryPrivateSubnet1, !Ref GalleryPrivateSubnet2 ] ]
