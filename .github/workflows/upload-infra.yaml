@@ -25,12 +25,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Sync infra templates to S3
+      - name: Upload infra/*.yaml to infra/ folder in S3
         run: |
-          aws s3 sync infra/ s3://$S3_BUCKET/ \
-            --exclude "*" \
-            --include "*.yaml" \
-            --include "*.yml"
+          for file in infra/*.yaml; do
+            aws s3 cp "$file" "s3://$S3_BUCKET/infra/$(basename $file)"
+          done
 
       - name: Zip CodeDeploy files
         run: |
@@ -41,10 +40,8 @@ jobs:
         run: |
           aws s3 cp codedeploy-bundle.zip s3://$S3_BUCKET/codedeploy-bundle.zip
 
-      - name: Print uploaded template URLs
+      - name: Print uploaded Template URLs
         run: |
-          echo "Templates uploaded to:"
-          find infra -name "*.yaml" -o -name "*.yml" | while read file; do
-            filename=$(basename "$file")
-            echo "https://$S3_BUCKET.s3.${AWS_REGION}.amazonaws.com/$filename"
+          for file in infra/*.yaml; do
+            echo "https://$S3_BUCKET.s3.${AWS_REGION}.amazonaws.com/infra/$(basename $file)"
           done
