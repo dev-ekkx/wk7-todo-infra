@@ -13,7 +13,7 @@ Resources:
   GalleryBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${AppName}-images
+      BucketName: !Sub ${AppName}-${AWS::AccountId}-images
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ["*"]
@@ -28,7 +28,7 @@ Resources:
 
       Tags:
         - Key: Name
-          Value: !Sub ${AppName}-images
+          Value: !Sub ${AppName}-${AWS::AccountId}-images
         - Key: Lab
           Value: !Ref LabTag
 
@@ -37,7 +37,7 @@ Outputs:
     Description: S3 bucket used by application
     Value: !Ref GalleryBucket
     Export:
-      Name: !Sub ${AppName}-images
+      Name: !Sub ${AppName}-${AWS::AccountId}-images
 
   BucketArn:
     Description: ARN of the bucket
