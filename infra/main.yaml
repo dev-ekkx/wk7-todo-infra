@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Root Stack for ECS Java Gallery App with S3, Auto Scaling, ALB, Code Deploy
+Description: Root Stack for ECS Go and Angular Gallery App with S3, Auto Scaling, ALB, CodePipeline
 
 Parameters:
   AppName:
