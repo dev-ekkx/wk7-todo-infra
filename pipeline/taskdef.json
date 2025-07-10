@@ -1,7 +1,7 @@
 {
   "family": "gallery-task",
-  "executionRoleArn": "arn:aws:iam::124355655853:role/wk5-gallery-ecs-role",
-  "taskRoleArn": "arn:aws:iam::124355655853:role/wk5-gallery-ecs-role",
+  "executionRoleArn": "arn:aws:iam::124355655853:role/gallery-ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::124355655853:role/gallery-ecs-task-execution-role",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
