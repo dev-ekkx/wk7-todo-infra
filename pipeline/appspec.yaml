@@ -1,9 +1,9 @@
-# version: 1
-# Resources:
-#   - TargetService:
-#       Type: AWS::ECS::Service
-#       Properties:
-#         TaskDefinition: "<TASK_DEFINITION>"
-#         LoadBalancerInfo:
-#           ContainerName: "frontend"
-#           ContainerPort: 80
+version: 1
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:iam::124355655853:role/wk5-gallery-ecs-role"
+        LoadBalancerInfo:
+          ContainerName: "gallery-container"
+          ContainerPort: 80

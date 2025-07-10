@@ -1,7 +1,7 @@
 {
   "family": "gallery-task",
-  "executionRoleArn": "arn:aws:iam::850995534424:role/shutter-box-ecs-task-execution-role",
-  "taskRoleArn": "arn:aws:iam::850995534424:role/shutter-box-ecs-task-execution-role",
+  "executionRoleArn": "arn:aws:iam::124355655853:role/wk5-gallery-ecs-role",
+  "taskRoleArn": "arn:aws:iam::124355655853:role/wk5-gallery-ecs-role",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
@@ -51,7 +51,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/shutter-box",
+          "awslogs-group": "/ecs/gallery",
           "awslogs-region": "eu-west-1",
           "awslogs-create-group": "true",
           "awslogs-stream-prefix": "ecs"
