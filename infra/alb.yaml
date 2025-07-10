@@ -108,19 +108,6 @@ Resources:
                 Resource:
                   - !Sub arn:aws:s3:::${S3BucketName}
                   - !Sub arn:aws:s3:::${S3BucketName}/*
-
-        # - PolicyName: !Sub ${AppName}-SSMAccessPolicy
-        #   PolicyDocument:
-        #     Statement:
-        #       - Effect: Allow
-        #         Action:
-        #           - ssm:GetParameter
-        #           - ssm:GetParameters
-        #           - ssm:GetParametersByPath
-        #         Resource:
-        #           - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/*
-        #           - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/image-uri/
-
         - PolicyName: !Sub ${AppName}-LoggingAccess
           PolicyDocument:
             Statement:
@@ -258,17 +245,6 @@ Resources:
               Value: !Ref "AWS::Region"
             - Name: BUCKET_NAME
               Value: !Ref S3BucketName
-            # - Name: DB_HOST
-            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/host:1}}"
-            # - Name: DB_PORT
-            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/port:1}}"
-            # - Name: DB_NAME
-            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/name:1}}"
-          # Secrets:
-          #   - Name: DB_USERNAME
-          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/username
-          #   - Name: DB_PASSWORD
-          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/password
           LogConfiguration:
             LogDriver: awslogs
             Options:

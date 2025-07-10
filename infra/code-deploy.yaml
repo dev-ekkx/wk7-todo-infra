@@ -60,9 +60,6 @@ Resources:
   # Gallery Deployment Group
   GalleryCodeDeployDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
-    DependsOn: 
-      - GalleryCodeDeployRole
-      - GalleryCodeDeployApp
     Properties:
       ApplicationName: !Ref GalleryCodeDeployApp
       DeploymentGroupName: !Sub ${AppName}-codedeploy-group

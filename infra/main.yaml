@@ -39,7 +39,6 @@ Resources:
   # Gallery Security Groups Stack
   GallerySecurityGroupsStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: GalleryVPCStack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/security-groups.yaml"
       Parameters:
@@ -71,7 +70,6 @@ Resources:
   # Gallery CodeDeploy Stack
   GalleryCodeDeployStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: GalleryECSAppStack
     DeletionPolicy: Delete
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/code-deploy.yaml"
@@ -87,7 +85,6 @@ Resources:
   # Gallery CodePipeline Stack
   GalleryCodePipelineStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: GalleryCodeDeployStack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/code-pipeline.yaml"
       Parameters:
@@ -95,24 +92,6 @@ Resources:
         LabTag: !Ref LabTag
         CodeDeployApplication: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployAppName
         CodeDeployDeploymentGroup: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployDeploymentGroupName
-
-  # # Gallery RDS Stack
-  # GalleryRDSStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   DependsOn:
-  #     - GalleryVPCStack
-  #     - GallerySecurityGroupsStack
-  #   Properties:
-  #     TemplateURL: !Sub "${TemplateS3BaseURL}/rds.yml"
-  #     Parameters:
-  #       AppName: !Ref AppName
-  #       LabTag: !Ref LabTag
-  #       VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
-  #       PrivateSubnet1: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet1Id
-  #       PrivateSubnet2: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet2Id
-  #       RdsSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.RdsSecurityGroup
-  #       RdsVPCEndpointSG: !GetAtt GallerySecurityGroupsStack.Outputs.RdsVPCEndpointSG
-  #       VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
 
 Outputs:
   LoadBalancerDNS:
