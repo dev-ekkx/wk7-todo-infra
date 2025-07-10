@@ -111,7 +111,7 @@ Resources:
                 Version: 1
               Configuration:
                 S3Bucket: !Ref InfraBucket
-                S3ObjectKey: pipeline-configs.zip
+                S3ObjectKey: codedeploy-bundle.zip
                 PollForSourceChanges: false
               OutputArtifacts:
                 - Name: SourceOutput
