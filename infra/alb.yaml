@@ -98,7 +98,15 @@ Resources:
                   - ecr:ListImages
                   - ecr:DescribeImages
                 Resource: "*"
-
+        - PolicyName: !Sub ${AppName}-SSMAccessPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                Resource: "*"
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
             Statement:
