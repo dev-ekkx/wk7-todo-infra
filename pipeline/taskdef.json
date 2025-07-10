@@ -16,7 +16,35 @@
         {
           "containerPort": 80,
           "hostPort": 80,
-          "protocol": "tcp"
+          "protocol": "http"
+        }
+      ],
+      "environment": [
+        {
+            "name": "AWS_REGION",
+            "value": "eu-west-1"
+        },
+        {
+            "name": "S3_BUCKET_NAME",
+            "value": "week5-image-upload"
+        },
+        {
+            "name": "PORT",
+            "value": "8080"
+        },
+        {
+            "name": "GIN_MODE",
+            "value": "release"
+        }
+      ],
+      "secrets": [
+            {
+            "name": "S3_ACCESS_KEY",
+            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
+        },
+        {
+            "name": "S3_SECRET_KEY",
+            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret-key"
         }
       ],
       "essential": true,
