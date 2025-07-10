@@ -101,9 +101,9 @@ Resources:
         Type: S3
         Location: !Ref InfraBucket
       Stages:
-        - Name: SourceFromS3
+        - Name: SourceFileFromS3
           Actions:
-            - Name: SourceFromS3
+            - Name: SourceFileFromS3
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -116,9 +116,9 @@ Resources:
               OutputArtifacts:
                 - Name: SourceOutput
               RunOrder: 1
-        - Name: DeployToECS
+        - Name: DeployImageToECS
           Actions:
-            - Name: DeployToECS
+            - Name: DeployImageToECS
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
