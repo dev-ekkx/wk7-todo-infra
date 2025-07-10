@@ -39,7 +39,7 @@ jobs:
       - name: Zip CodeDeploy files
         run: |
           cd pipeline
-          zip ../codedeploy-bundle.zip appspec.yml taskdef.json
+          zip ../codedeploy-bundle.zip appspec.yaml taskdef.json
 
       - name: Upload codedeploy-bundle.zip to S3
         run: |
