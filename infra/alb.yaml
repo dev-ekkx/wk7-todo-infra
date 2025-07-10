@@ -109,17 +109,17 @@ Resources:
                   - !Sub arn:aws:s3:::${S3BucketName}
                   - !Sub arn:aws:s3:::${S3BucketName}/*
 
-        - PolicyName: !Sub ${AppName}-SSMAccessPolicy
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ssm:GetParameter
-                  - ssm:GetParameters
-                  - ssm:GetParametersByPath
-                Resource:
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/*
-                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/image-uri/
+        # - PolicyName: !Sub ${AppName}-SSMAccessPolicy
+        #   PolicyDocument:
+        #     Statement:
+        #       - Effect: Allow
+        #         Action:
+        #           - ssm:GetParameter
+        #           - ssm:GetParameters
+        #           - ssm:GetParametersByPath
+        #         Resource:
+        #           - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/*
+        #           - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/image-uri/
 
         - PolicyName: !Sub ${AppName}-LoggingAccess
           PolicyDocument:
@@ -172,7 +172,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: !Sub ${AppName}-blue-tg
-      Port: 8081
+      Port: 80
       Protocol: HTTP
       VpcId: !Ref VPCId
       TargetType: ip
@@ -194,7 +194,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: !Sub ${AppName}-green-tg
-      Port: 8081
+      Port: 80
       Protocol: HTTP
       VpcId: !Ref VPCId
       TargetType: ip
@@ -251,24 +251,24 @@ Resources:
           Image: !Ref ECRImageUri
           Essential: true
           PortMappings:
-            - ContainerPort: 8081
+            - ContainerPort: 80
               Protocol: tcp
           Environment:
             - Name: AWS_REGION
               Value: !Ref "AWS::Region"
             - Name: BUCKET_NAME
               Value: !Ref S3BucketName
-            - Name: DB_HOST
-              Value: !Sub "{{resolve:ssm:/${AppName}/db/host:1}}"
-            - Name: DB_PORT
-              Value: !Sub "{{resolve:ssm:/${AppName}/db/port:1}}"
-            - Name: DB_NAME
-              Value: !Sub "{{resolve:ssm:/${AppName}/db/name:1}}"
-          Secrets:
-            - Name: DB_USERNAME
-              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/username
-            - Name: DB_PASSWORD
-              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/password
+            # - Name: DB_HOST
+            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/host:1}}"
+            # - Name: DB_PORT
+            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/port:1}}"
+            # - Name: DB_NAME
+            #   Value: !Sub "{{resolve:ssm:/${AppName}/db/name:1}}"
+          # Secrets:
+          #   - Name: DB_USERNAME
+          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/username
+          #   - Name: DB_PASSWORD
+          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/db/password
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -279,7 +279,7 @@ Resources:
           HealthCheck:
             Command:
               - "CMD-SHELL"
-              - "/bin/sh -c 'curl -f http://localhost:8081/actuator/health || exit 1'"
+              - "/bin/sh -c 'curl -f http://localhost || exit 1'"
             Interval: 30
             Timeout: 10
             Retries: 3
@@ -313,7 +313,7 @@ Resources:
             - !Ref VPCEndpointSG
       LoadBalancers:
         - ContainerName: !Sub ${AppName}-container
-          ContainerPort: 8081
+          ContainerPort: 80
           TargetGroupArn: !Ref GalleryTargetGroup
       TaskDefinition: !Ref GalleryTaskDefinition
       Tags:
