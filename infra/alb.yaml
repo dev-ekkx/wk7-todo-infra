@@ -106,7 +106,12 @@ Resources:
                   - ssm:GetParameter
                   - ssm:GetParameters
                   - ssm:GetParametersByPath
-                Resource: "*"
+                  - secretsmanager:GetSecretValue
+                  - kms:Decrypt 
+                Resource:
+                  - arn:aws:ssm:${{ASW::Region}}:${AWS::AccountId}:parameter/wk5-gallery-app/*
+                  - arn:aws:secretsmanager:${{ASW::Region}}:${AWS::AccountId}:secret:*
+                  - arn:aws:kms:${{ASW::Region}}:${AWS::AccountId}:key/5cdc0db5-a494-420b-b130-b060ddd69f5e
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
             Statement:
