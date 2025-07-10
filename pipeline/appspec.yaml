@@ -6,4 +6,4 @@ Resources:
         TaskDefinition: "arn:aws:ecs:eu-west-1:124355655853:task-definition/gallery-task:4"
         LoadBalancerInfo:
           ContainerName: "gallery-container"
-          ContainerPort: 80
+          ContainerPort: 8081

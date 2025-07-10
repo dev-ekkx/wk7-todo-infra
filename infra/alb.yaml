@@ -30,6 +30,10 @@ Parameters:
     Type: AWS::EC2::SecurityGroup::Id
   LabTag:
     Type: String
+  PORT:
+    Description: "Port on which the backend application runs"
+    Type: String
+    Default: "8080"
 
 Resources:
   # Gallery ECS Autoscaling Role
@@ -163,7 +167,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPCId
       TargetType: ip
-      HealthCheckPath: /actuator/health
+      HealthCheckPath: /
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
@@ -185,7 +189,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPCId
       TargetType: ip
-      HealthCheckPath: /actuator/health
+      HealthCheckPath: /
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 3
@@ -238,13 +242,22 @@ Resources:
           Image: !Ref ECRImageUri
           Essential: true
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: 8081
               Protocol: tcp
           Environment:
             - Name: AWS_REGION
               Value: !Ref "AWS::Region"
-            - Name: BUCKET_NAME
+            - Name: S3_BUCKET_NAME
               Value: !Ref S3BucketName
+            - Name: PORT
+              Value: !Ref PORT
+            - Name: GIN_MODE
+              Value: release
+          Secrets:
+            - Name: S3_ACCESS_KEY_ID
+              ValueFrom: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
+            - Name: S3_SECRET_ACCESS_KEY
+              ValueFrom: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret-key"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -255,7 +268,7 @@ Resources:
           HealthCheck:
             Command:
               - "CMD-SHELL"
-              - "/bin/sh -c 'curl -f http://localhost || exit 1'"
+              - "/bin/sh -c 'curl -f http://localhost:8081 || exit 1'"
             Interval: 30
             Timeout: 10
             Retries: 3
@@ -289,7 +302,7 @@ Resources:
             - !Ref VPCEndpointSG
       LoadBalancers:
         - ContainerName: !Sub ${AppName}-container
-          ContainerPort: 80
+          ContainerPort: 8081
           TargetGroupArn: !Ref GalleryTargetGroup
       TaskDefinition: !Ref GalleryTaskDefinition
       Tags:
