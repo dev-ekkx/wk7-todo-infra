@@ -103,12 +103,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - ssm:GetParameter
                   - ssm:GetParameters
+                  - ssm:GetParameter
                   - ssm:GetParametersByPath
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/*"
                   - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
@@ -262,10 +262,11 @@ Resources:
               Value: !Ref PORT
             - Name: GIN_MODE
               Value: release
+          Secrets:
             - Name: AWS_ACCESS_KEY_ID
-              Value: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/access-key
+              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/access-key
             - Name: AWS_SECRET_ACCESS_KEY
-              Value: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/secret_access
+              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/secret_access
           LogConfiguration:
             LogDriver: awslogs
             Options:
