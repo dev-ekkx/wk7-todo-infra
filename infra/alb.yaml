@@ -262,10 +262,11 @@ Resources:
               Value: !Ref PORT
             - Name: GIN_MODE
               Value: release
+          Secrets:
             - Name: AWS_ACCESS_KEY_ID
-              Value: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
+              ValueFrom: arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key
             - Name: AWS_SECRET_ACCESS_KEY
-              Value: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access"
+              ValueFrom: arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access
           LogConfiguration:
             LogDriver: awslogs
             Options:

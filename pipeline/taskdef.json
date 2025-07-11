@@ -35,14 +35,16 @@
         {
             "name": "GIN_MODE",
             "value": "release"
-        },
+        }
+      ],
+        "secrets": [
             {
             "name": "AWS_ACCESS_KEY_ID",
-            "value": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
+            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
         },
         {
             "name": "AWS_SECRET_ACCESS_KEY",
-            "value": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access"
+            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access"
         }
       ],
       "essential": true,
