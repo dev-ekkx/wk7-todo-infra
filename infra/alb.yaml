@@ -106,13 +106,8 @@ Resources:
                   - ssm:GetParameter
                   - ssm:GetParameters
                   - ssm:GetParametersByPath
-                  - secretsmanager:GetSecretValue
-                  - kms:Decrypt 
                 Resource:
-                  - arn:aws:ssm:eu-west-1:124355655853:parameter/*
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
-                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
-                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/5cdc0db5-a494-420b-b130-b060ddd69f5e"
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
             Statement:
@@ -267,11 +262,10 @@ Resources:
               Value: !Ref PORT
             - Name: GIN_MODE
               Value: release
-          Secrets:
-            - Name: S3_ACCESS_KEY_ID
-              ValueFrom: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
-            - Name: S3_SECRET_ACCESS_KEY
-              ValueFrom: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret-key"
+            - Name: AWS_ACCESS_KEY_ID
+              Value: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access"
           LogConfiguration:
             LogDriver: awslogs
             Options:
