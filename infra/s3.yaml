@@ -13,7 +13,7 @@ Resources:
   GalleryBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${AppName}-${AWS::AccountId}-images
+      BucketName: week5-image-upload
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ["*"]
