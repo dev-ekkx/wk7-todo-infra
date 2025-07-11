@@ -37,16 +37,6 @@
             "value": "release"
         }
       ],
-        "secrets": [
-            {
-            "name": "AWS_ACCESS_KEY_ID",
-            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key"
-        },
-        {
-            "name": "AWS_SECRET_ACCESS_KEY",
-            "valueFrom": "arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access"
-        }
-      ],
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
