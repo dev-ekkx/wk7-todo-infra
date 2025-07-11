@@ -106,8 +106,10 @@ Resources:
                   - ssm:GetParameter
                   - ssm:GetParameters
                   - ssm:GetParametersByPath
+                  - secretsmanager:GetSecretValue
                 Resource:
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
             Statement:
@@ -264,9 +266,9 @@ Resources:
               Value: release
           Secrets:
             - Name: AWS_ACCESS_KEY_ID
-              ValueFrom: arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/access-key
+              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/access-key
             - Name: AWS_SECRET_ACCESS_KEY
-              ValueFrom: arn:aws:ssm:eu-west-1:124355655853:parameter/wk5-gallery-app/secret_access
+              ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/secret_access
           LogConfiguration:
             LogDriver: awslogs
             Options:
