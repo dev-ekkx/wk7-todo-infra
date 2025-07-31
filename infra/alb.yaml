@@ -16,9 +16,6 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2:
     Type: AWS::EC2::Subnet::Id
-  S3BucketName:
-    Description: "Name of the S3 bucket for images"
-    Type: String
   VPCEndpointSG:
     Description: "Security Group for VPC endpoints"
     Type: AWS::EC2::SecurityGroup::Id
@@ -240,8 +237,6 @@ Resources:
           Environment:
             - Name: AWS_REGION
               Value: !Ref "AWS::Region"
-            - Name: S3_BUCKET_NAME
-              Value: !Ref S3BucketName
             - Name: PORT
               Value: !Ref PORT
             - Name: GIN_MODE
