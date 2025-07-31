@@ -199,7 +199,7 @@ Resources:
   DynamoDBEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcId: !Ref TasklyVPC
+      VpcId: !Ref TodoAppVPC
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
       VpcEndpointType: Gateway
       RouteTableIds:
