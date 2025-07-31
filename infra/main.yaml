@@ -1,103 +1,88 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Root Stack for ECS Go and Angular Gallery App with S3, Auto Scaling, ALB, CodePipeline
+Description: Root Stack for ECS Go and Angular TodoApp App with S3, Auto Scaling, ALB, CodePipeline
 
 Parameters:
   AppName:
     Type: String
-    Default: gallery
+    Default: TodoApp
   LabTag:
     Type: String
-    Default: week5_project
+    Default: week7_lab
   TemplateS3BaseURL:
     Description: "S3 Base URL where templates are stored"
     Type: String
-    Default: https://wk5-gallery-app-bucket.s3.eu-west-1.amazonaws.com/infra
+    Default: https://wk-7-todo-app-bucket.s3.eu-west-1.amazonaws.com/infra
   ECRImageUri:
     Type: String
-    Default: 124355655853.dkr.ecr.eu-west-1.amazonaws.com/gallery-repo:latest
+    Default: 124355655853.dkr.ecr.eu-west-1.amazonaws.com/todo-app-repo:latest
 
 Resources:
-  # Gallery S3 Stack
-  GalleryS3Stack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateS3BaseURL}/s3.yaml"
-      Parameters:
-        AppName: !Ref AppName
-        LabTag: !Ref LabTag
-
-  # Gallery VPC Stack
-  GalleryVPCStack:
+  # TodoApp VPC Stack
+  TodoAppVPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/vpc.yaml"
       Parameters:
         AppName: !Ref AppName
-        S3BucketName: !GetAtt GalleryS3Stack.Outputs.BucketName
         LabTag: !Ref LabTag
 
-  # Gallery Security Groups Stack
-  GallerySecurityGroupsStack:
+  # TodoApp Security Groups Stack
+  TodoAppSecurityGroupsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/security-groups.yaml"
       Parameters:
         AppName: !Ref AppName
         LabTag: !Ref LabTag
-        VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
-        VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
+        VPCId: !GetAtt TodoAppVPCStack.Outputs.VPCId
+        VPCEndpointSG: !GetAtt TodoAppVPCStack.Outputs.VPCEndpointSG
 
-  # Gallery ECS Application Stack
-  GalleryECSAppStack:
+  # TodoApp ECS Application Stack
+  TodoAppECSAppStack:
     Type: AWS::CloudFormation::Stack
-    # DependsOn: GalleryRDSStack
+    # DependsOn: TodoAppRDSStack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/alb.yaml"
       Parameters:
-        VPCId: !GetAtt GalleryVPCStack.Outputs.VPCId
-        PublicSubnet1: !GetAtt GalleryVPCStack.Outputs.PublicSubnet1Id
-        PublicSubnet2: !GetAtt GalleryVPCStack.Outputs.PublicSubnet2Id
-        PrivateSubnet1: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet1Id
-        PrivateSubnet2: !GetAtt GalleryVPCStack.Outputs.PrivateSubnet2Id
-        S3BucketName: !GetAtt GalleryS3Stack.Outputs.BucketName
-        VPCEndpointSG: !GetAtt GalleryVPCStack.Outputs.VPCEndpointSG
-        ECSSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.ECSSecurityGroup
-        ALBSecurityGroup: !GetAtt GallerySecurityGroupsStack.Outputs.ALBSecurityGroup
+        VPCId: !GetAtt TodoAppVPCStack.Outputs.VPCId
+        PublicSubnet1: !GetAtt TodoAppVPCStack.Outputs.PublicSubnet1Id
+        PublicSubnet2: !GetAtt TodoAppVPCStack.Outputs.PublicSubnet2Id
+        PrivateSubnet1: !GetAtt TodoAppVPCStack.Outputs.PrivateSubnet1Id
+        PrivateSubnet2: !GetAtt TodoAppVPCStack.Outputs.PrivateSubnet2Id
+        VPCEndpointSG: !GetAtt TodoAppVPCStack.Outputs.VPCEndpointSG
+        ECSSecurityGroup: !GetAtt TodoAppSecurityGroupsStack.Outputs.ECSSecurityGroup
+        ALBSecurityGroup: !GetAtt TodoAppSecurityGroupsStack.Outputs.ALBSecurityGroup
         AppName: !Ref AppName
         LabTag: !Ref LabTag
         ECRImageUri: !Ref ECRImageUri
 
-  # Gallery CodeDeploy Stack
-  GalleryCodeDeployStack:
+  # TodoApp CodeDeploy Stack
+  TodoAppCodeDeployStack:
     Type: AWS::CloudFormation::Stack
     DeletionPolicy: Delete
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/code-deploy.yaml"
       Parameters:
-        ClusterName: !GetAtt GalleryECSAppStack.Outputs.ClusterName
-        ServiceName: !GetAtt GalleryECSAppStack.Outputs.ServiceName
-        TargetGroup1: !GetAtt GalleryECSAppStack.Outputs.BlueTargetGroupName
-        TargetGroup2: !GetAtt GalleryECSAppStack.Outputs.GreenTargetGroupName
-        ListenerArn: !GetAtt GalleryECSAppStack.Outputs.ALBListenerArn
+        ClusterName: !GetAtt TodoAppECSAppStack.Outputs.ClusterName
+        ServiceName: !GetAtt TodoAppECSAppStack.Outputs.ServiceName
+        TargetGroup1: !GetAtt TodoAppECSAppStack.Outputs.BlueTargetGroupName
+        TargetGroup2: !GetAtt TodoAppECSAppStack.Outputs.GreenTargetGroupName
+        ListenerArn: !GetAtt TodoAppECSAppStack.Outputs.ALBListenerArn
         AppName: !Ref AppName
         LabTag: !Ref LabTag
 
-  # Gallery CodePipeline Stack
-  GalleryCodePipelineStack:
+  # TodoApp CodePipeline Stack
+  TodoAppCodePipelineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/code-pipeline.yaml"
       Parameters:
         AppName: !Ref AppName
         LabTag: !Ref LabTag
-        CodeDeployApplication: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployAppName
-        CodeDeployDeploymentGroup: !GetAtt GalleryCodeDeployStack.Outputs.CodeDeployDeploymentGroupName
+        CodeDeployApplication: !GetAtt TodoAppCodeDeployStack.Outputs.CodeDeployAppName
+        CodeDeployDeploymentGroup: !GetAtt TodoAppCodeDeployStack.Outputs.CodeDeployDeploymentGroupName
 
 Outputs:
   LoadBalancerDNS:
-    Description: Gallery ALB DNS to access app
-    Value: !GetAtt GalleryECSAppStack.Outputs.AppLoadBalancerDNS
-
-  S3BucketName:
-    Description: S3 bucket used by the Gallery app
-    Value: !GetAtt GalleryS3Stack.Outputs.BucketName
+    Description: TodoApp ALB DNS to access app
+    Value: !GetAtt TodoAppECSAppStack.Outputs.AppLoadBalancerDNS

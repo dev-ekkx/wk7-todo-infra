@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Gallery CodeDeploy ECS Application & Deployment Group
+Description: TodoApp CodeDeploy ECS Application & Deployment Group
 
 Parameters:
   AppName:
@@ -18,8 +18,8 @@ Parameters:
     Type: String
 
 Resources:
-  # Gallery CodeDeploy IAM Role
-  GalleryCodeDeployRole:
+  # TodoApp CodeDeploy IAM Role
+  TodoAppCodeDeployRole:
     Type: AWS::IAM::Role
     Properties:
         AssumeRolePolicyDocument:
@@ -30,7 +30,7 @@ Resources:
                     Service: codedeploy.amazonaws.com
                   Action: sts:AssumeRole
         Policies:
-            - PolicyName: GalleryCodeDeployInlinePolicy
+            - PolicyName: TodoAppCodeDeployInlinePolicy
               PolicyDocument:
                 Version: "2012-10-17"
                 Statement:
@@ -50,28 +50,28 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery CodeDeploy Application
-  GalleryCodeDeployApp:
+  # TodoApp CodeDeploy Application
+  TodoAppCodeDeployApp:
     Type: AWS::CodeDeploy::Application
     Properties:
       ApplicationName: !Sub ${AppName}-codedeploy-app
       ComputePlatform: ECS
 
-  # Gallery Deployment Group
-  GalleryCodeDeployDeploymentGroup:
+  # TodoApp Deployment Group
+  TodoAppCodeDeployDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
-      ApplicationName: !Ref GalleryCodeDeployApp
+      ApplicationName: !Ref TodoAppCodeDeployApp
       DeploymentGroupName: !Sub ${AppName}-codedeploy-group
       DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce
-      ServiceRoleArn: !GetAtt GalleryCodeDeployRole.Arn
+      ServiceRoleArn: !GetAtt TodoAppCodeDeployRole.Arn
       DeploymentStyle:
         DeploymentType: BLUE_GREEN
         DeploymentOption: WITH_TRAFFIC_CONTROL
       BlueGreenDeploymentConfiguration:
         TerminateBlueInstancesOnDeploymentSuccess:
           Action: TERMINATE
-          TerminationWaitTimeInMinutes: 5
+          TerminationWaitTimeInMinutes: 2
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
           WaitTimeInMinutes: 0
@@ -90,13 +90,13 @@ Resources:
 
 Outputs:
   CodeDeployAppName:
-    Description: 'Gallery CodeDeploy Application for ECS Blue/Green'
-    Value: !Ref GalleryCodeDeployApp
+    Description: 'TodoApp CodeDeploy Application for ECS Blue/Green'
+    Value: !Ref TodoAppCodeDeployApp
     Export:
       Name: !Sub ${AppName}-codedeploy-app
 
   CodeDeployDeploymentGroupName:
-    Description: 'Gallery Deployment Group for ECS Blue/Green'
-    Value: !Ref GalleryCodeDeployDeploymentGroup
+    Description: 'TodoApp Deployment Group for ECS Blue/Green'
+    Value: !Ref TodoAppCodeDeployDeploymentGroup
     Export:
       Name: !Sub ${AppName}-codedeploy-group

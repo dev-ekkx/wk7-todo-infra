@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Gallery ECS Cluster, Fargate Service with ALB and Auto Scaling
+Description: TodoApp ECS Cluster, Fargate Service with ALB and Auto Scaling
 
 Parameters:
   AppName:
@@ -36,8 +36,8 @@ Parameters:
     Default: "8080"
 
 Resources:
-  # Gallery ECS Autoscaling Role
-  GalleryECSAutoScalingRole:
+  # TodoApp ECS Autoscaling Role
+  TodoAppECSAutoScalingRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -72,8 +72,8 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery ECS Task Execution Role
-  GalleryTaskExecutionRole:
+  # TodoApp ECS Task Execution Role
+  TodoAppTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub ${AppName}-ecs-task-execution-role
@@ -108,7 +108,7 @@ Resources:
                   - ssm:GetParametersByPath
                   - secretsmanager:GetSecretValue
                 Resource:
-                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk-7-todo-app/*"
                   - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
         - PolicyName: !Sub ${AppName}-S3AccessPolicy
           PolicyDocument:
@@ -133,12 +133,47 @@ Resources:
                 Resource: "*"
       Tags:
         - Key: Name
-          Value: !Sub ${AppName}-task-exec-role
+          Value: !Sub ${AppName}-task-execution-role
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery Elastic Container Service (ECS) Cluster
-  GalleryECSCluster:
+
+  # TodoApp DynamoDB ECS Task Role
+  TodoAppTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AppName}-ecs-task-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${AppName}-DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TodoItems
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TodoItems/index/*
+      Tags:
+        - Key: Name
+          Value: !Sub ${AppName}-task-role
+        - Key: Lab
+          Value: !Ref LabTag
+
+  # TodoApp Elastic Container Service (ECS) Cluster
+  TodoAppECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Sub ${AppName}-ecs-cluster
@@ -151,8 +186,90 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery Application Load Balancer
-  GalleryLoadBalancer:
+  # TodoApp ECS Service
+  TodoAppECSService:
+    Type: AWS::ECS::Service
+    DependsOn: TodoAppListener
+    Properties:
+      ServiceName: !Sub ${AppName}-ecs-service
+      Cluster: !Ref TodoAppECSCluster
+      LaunchType: FARGATE
+      DesiredCount: 2
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentController:
+        Type: CODE_DEPLOY
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups: 
+            - !Ref ECSSecurityGroup
+            - !Ref VPCEndpointSG
+      LoadBalancers:
+        - ContainerName: !Sub ${AppName}-container
+          ContainerPort: 8081
+          TargetGroupArn: !Ref TodoAppTargetGroup
+      TaskDefinition: !Ref TodoAppTaskDefinition
+      Tags:
+        - Key: Name
+          Value: !Sub ${AppName}-ecs-service
+        - Key: Lab
+          Value: !Ref LabTag
+
+  # TodoApp ECS Task Definition
+  TodoAppTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${AppName}-task
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities: 
+        - FARGATE
+      ExecutionRoleArn: !GetAtt TodoAppTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TodoAppTaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub ${AppName}-container
+          Image: !Ref ECRImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8081
+              Protocol: tcp
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref "AWS::Region"
+            - Name: S3_BUCKET_NAME
+              Value: !Ref S3BucketName
+            - Name: PORT
+              Value: !Ref PORT
+            - Name: GIN_MODE
+              Value: release
+         
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TodoAppCloudWatchLogGroup
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: "true"
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "/bin/sh -c 'curl -f http://localhost:8081 || exit 1'"
+            Interval: 30
+            Timeout: 10
+            Retries: 3
+            StartPeriod: 60
+      Tags:
+        - Key: Name
+          Value: !Sub ${AppName}-task-definition
+        - Key: Lab
+          Value: !Ref LabTag
+
+  # TodoApp Application Load Balancer
+  TodoAppLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: !Sub ${AppName}-alb
@@ -167,8 +284,8 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery Load Balancer Target Group
-  GalleryTargetGroup:
+  # TodoApp Load Balancer Target Group
+  TodoAppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: !Sub ${AppName}-blue-tg
@@ -189,8 +306,8 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery Blue/Green CodeDeploy Target Group
-  GalleryTargetGroup2:
+  # TodoApp Blue/Green CodeDeploy Target Group
+  TodoAppTargetGroup2:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: !Sub ${AppName}-green-tg
@@ -211,19 +328,19 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery Load Balancer Listener
-  GalleryListener:
+  # TodoApp Load Balancer Listener
+  TodoAppListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref GalleryTargetGroup
-      LoadBalancerArn: !Ref GalleryLoadBalancer
+          TargetGroupArn: !Ref TodoAppTargetGroup
+      LoadBalancerArn: !Ref TodoAppLoadBalancer
       Port: 80
       Protocol: HTTP
 
-  # Gallery CloudWatch Log Group
-  GalleryCloudWatchLogGroup:
+  # TodoApp CloudWatch Log Group
+  TodoAppCloudWatchLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /ecs/${AppName}
@@ -234,113 +351,26 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery ECS Task Definition
-  GalleryTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${AppName}-task
-      Cpu: 256
-      Memory: 512
-      NetworkMode: awsvpc
-      RequiresCompatibilities: 
-        - FARGATE
-      ExecutionRoleArn: !GetAtt GalleryTaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt GalleryTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: !Sub ${AppName}-container
-          Image: !Ref ECRImageUri
-          Essential: true
-          PortMappings:
-            - ContainerPort: 8081
-              Protocol: tcp
-          Environment:
-            - Name: AWS_REGION
-              Value: !Ref "AWS::Region"
-            - Name: S3_BUCKET_NAME
-              Value: !Ref S3BucketName
-            - Name: PORT
-              Value: !Ref PORT
-            - Name: GIN_MODE
-              Value: release
-          # Secrets:
-          #   - Name: AWS_ACCESS_KEY_ID
-          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/access-key
-          #   - Name: AWS_SECRET_ACCESS_KEY
-          #     ValueFrom: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/wk5-gallery-app/secret_access
-         
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref GalleryCloudWatchLogGroup
-              awslogs-region: !Ref "AWS::Region"
-              awslogs-stream-prefix: ecs
-              awslogs-create-group: "true"
-          HealthCheck:
-            Command:
-              - "CMD-SHELL"
-              - "/bin/sh -c 'curl -f http://localhost:8081 || exit 1'"
-            Interval: 30
-            Timeout: 10
-            Retries: 3
-            StartPeriod: 60
-      Tags:
-        - Key: Name
-          Value: !Sub ${AppName}-task-definition
-        - Key: Lab
-          Value: !Ref LabTag
-
-  # Gallery ECS Service
-  GalleryECSService:
-    Type: AWS::ECS::Service
-    DependsOn: GalleryListener
-    Properties:
-      ServiceName: !Sub ${AppName}-ecs-service
-      Cluster: !Ref GalleryECSCluster
-      LaunchType: FARGATE
-      DesiredCount: 2
-      HealthCheckGracePeriodSeconds: 120
-      DeploymentController:
-        Type: CODE_DEPLOY
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: DISABLED
-          Subnets:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-          SecurityGroups: 
-            - !Ref ECSSecurityGroup
-            - !Ref VPCEndpointSG
-      LoadBalancers:
-        - ContainerName: !Sub ${AppName}-container
-          ContainerPort: 8081
-          TargetGroupArn: !Ref GalleryTargetGroup
-      TaskDefinition: !Ref GalleryTaskDefinition
-      Tags:
-        - Key: Name
-          Value: !Sub ${AppName}-ecs-service
-        - Key: Lab
-          Value: !Ref LabTag
-
-  # Gallery Target Auto Scaling
-  GalleryAutoScalingTarget:
+  # TodoApp Target Auto Scaling
+  TodoAppAutoScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn:
-      - GalleryECSService
+      - TodoAppECSService
     Properties:
       MaxCapacity: 4
       MinCapacity: 2
       ResourceId: !Sub service/${AppName}-ecs-cluster/${AppName}-ecs-service
-      RoleARN: !GetAtt GalleryECSAutoScalingRole.Arn
+      RoleARN: !GetAtt TodoAppECSAutoScalingRole.Arn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
 
-  # Gallery Auto Scaling Policy
-  GalleryAutoScalingPolicy:
+  # TodoApp Auto Scaling Policy
+  TodoAppAutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: !Sub ${AppName}-cpu-scaling-policy
       PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref GalleryAutoScalingTarget
+      ScalingTargetId: !Ref TodoAppAutoScalingTarget
       TargetTrackingScalingPolicyConfiguration:
         TargetValue: 50.0
         PredefinedMetricSpecification:
@@ -348,64 +378,43 @@ Resources:
         ScaleInCooldown: 60
         ScaleOutCooldown: 60
 
-  # Gallery S3 Bucket Policy to allow ECS Task Role access
-  GalleryS3AccessPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref S3BucketName
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: AllowGalleryAppTaskAccess
-            Effect: Allow
-            Principal:
-              AWS: !GetAtt GalleryTaskExecutionRole.Arn
-            Action:
-              - "s3:GetObject"
-              - "s3:PutObject"
-              - "s3:DeleteObject"
-              - "s3:ListBucket"
-            Resource:
-              - !Sub "arn:aws:s3:::${S3BucketName}"
-              - !Sub "arn:aws:s3:::${S3BucketName}/*"
-
 Outputs:
   AppLoadBalancerDNS:
-    Description: Gallery ALB DNS to access app
-    Value: !GetAtt GalleryLoadBalancer.DNSName
+    Description: TodoApp ALB DNS to access app
+    Value: !GetAtt TodoAppLoadBalancer.DNSName
 
   ClusterName:
-    Description: Name of the Gallery ECS Cluster
-    Value: !Ref GalleryECSCluster
+    Description: Name of the TodoApp ECS Cluster
+    Value: !Ref TodoAppECSCluster
     Export:
       Name: !Sub ${AppName}-ecs-cluster
 
   ServiceName:
-    Description: Gallery ECS Service Name
+    Description: TodoApp ECS Service Name
     Value: !Sub ${AppName}-ecs-service
     Export:
       Name: !Sub ${AppName}-ecs-service
 
   BlueTargetGroupName:
-    Description: Name of the first Gallery target group
-    Value: !GetAtt GalleryTargetGroup.TargetGroupName
+    Description: Name of the first TodoApp target group
+    Value: !GetAtt TodoAppTargetGroup.TargetGroupName
     Export:
       Name: BlueTargetGroupName
 
   GreenTargetGroupName:
-    Description: Name of the second Gallery target group
-    Value: !GetAtt GalleryTargetGroup2.TargetGroupName
+    Description: Name of the second TodoApp target group
+    Value: !GetAtt TodoAppTargetGroup2.TargetGroupName
     Export:
       Name: GreenTargetGroupName
 
   ALBListenerArn:
-    Description: ARN of the Gallery Load Balancer Listener
-    Value: !Ref GalleryListener
+    Description: ARN of the TodoApp Load Balancer Listener
+    Value: !Ref TodoAppListener
     Export:
       Name: ALBListenerArn
 
   TaskExecRoleArn:
-    Description: ARN of the Gallery TaskExecutionRole
-    Value: !Ref GalleryTaskExecutionRole
+    Description: ARN of the TodoApp TaskExecutionRole
+    Value: !Ref TodoAppTaskExecutionRole
     Export:
       Name: TaskExecRoleArn

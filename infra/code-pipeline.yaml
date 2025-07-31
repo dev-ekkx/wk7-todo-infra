@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Gallery CodePipeline to deploy to ECS using CodeDeploy on ECR image push
+Description: TodoApp CodePipeline to deploy to ECS using CodeDeploy on ECR image push
 
 Parameters:
   AppName:
@@ -8,15 +8,15 @@ Parameters:
     Type: String
   InfraBucket:
     Type: String
-    Default: wk5-gallery-app-bucket
+    Default: wk-7-todo-app-bucket
   CodeDeployApplication:
     Type: String
   CodeDeployDeploymentGroup:
     Type: String
 
 Resources:
-  # Gallery CodePipeline IAM Role
-  GalleryCodePipelineRole:
+  # TodoApp CodePipeline IAM Role
+  TodoAppCodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub ${AppName}-pipeline-role
@@ -28,7 +28,7 @@ Resources:
               Service: codepipeline.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: GalleryCodePipelinePolicy
+        - PolicyName: TodoAppCodePipelinePolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -64,8 +64,8 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery EventBridge IAM Role
-  GalleryEventBridgeRole:
+  # TodoApp EventBridge IAM Role
+  TodoAppEventBridgeRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub ${AppName}-eventbridge-pipeline-role
@@ -77,7 +77,7 @@ Resources:
               Service: events.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: GalleryTriggerPipelinePolicy
+        - PolicyName: TodoAppTriggerPipelinePolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -91,12 +91,12 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery CodePipeline
-  GalleryPipeline:
+  # TodoApp CodePipeline
+  TodoAppPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: !Sub ${AppName}-pipeline
-      RoleArn: !GetAtt GalleryCodePipelineRole.Arn
+      RoleArn: !GetAtt TodoAppCodePipelineRole.Arn
       ArtifactStore:
         Type: S3
         Location: !Ref InfraBucket
@@ -136,8 +136,8 @@ Resources:
         - Key: Lab
           Value: !Ref LabTag
 
-  # Gallery ECR Push Event Rule
-  GalleryECRPushEvent:
+  # TodoApp ECR Push Event Rule
+  TodoAppECRPushEvent:
     Type: AWS::Events::Rule
     Properties:
       Description: !Sub Trigger pipeline when new image is pushed to ${AppName}-repo
@@ -158,11 +158,11 @@ Resources:
       Targets:
         - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}-pipeline
           Id: codepipeline
-          RoleArn: !GetAtt GalleryEventBridgeRole.Arn
+          RoleArn: !GetAtt TodoAppEventBridgeRole.Arn
 
 Outputs:
   PipelineName:
-    Description: Gallery CodePipeline Name
-    Value: !Ref GalleryPipeline
+    Description: TodoApp CodePipeline Name
+    Value: !Ref TodoAppPipeline
     Export:
       Name: !Sub ${AppName}-pipeline

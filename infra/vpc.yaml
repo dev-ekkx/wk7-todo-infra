@@ -7,12 +7,12 @@ Parameters:
   LabTag:
     Type: String
   S3BucketName:
-    Description: "Gallery S3 upload bucket"
+    Description: "TodoApp S3 upload bucket"
     Type: String
 
 Resources:
   # VPC
-  GalleryVPC:
+  TodoAppVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -29,7 +29,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for VPC Interface Endpoints
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 443
@@ -42,7 +42,7 @@ Resources:
           Value: !Ref LabTag
 
   # Internet Gateway
-  GalleryIGW:
+  TodoAppIGW:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
@@ -54,14 +54,14 @@ Resources:
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref GalleryVPC
-      InternetGatewayId: !Ref GalleryIGW
+      VpcId: !Ref TodoAppVPC
+      InternetGatewayId: !Ref TodoAppIGW
 
   # Subnets & Associations
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       CidrBlock: 10.0.1.0/24
       AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
@@ -74,7 +74,7 @@ Resources:
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       CidrBlock: 10.0.2.0/24
       AvailabilityZone: !Select [1, !GetAZs '']
       MapPublicIpOnLaunch: true
@@ -87,7 +87,7 @@ Resources:
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       CidrBlock: 10.0.3.0/24
       AvailabilityZone: !Select [0, !GetAZs '']
       Tags:
@@ -99,7 +99,7 @@ Resources:
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       CidrBlock: 10.0.4.0/24
       AvailabilityZone: !Select [1, !GetAZs '']
       Tags:
@@ -111,7 +111,7 @@ Resources:
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       Tags:
         - Key: Name
           Value: !Sub ${AppName}-public-rt
@@ -124,7 +124,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref GalleryIGW
+      GatewayId: !Ref TodoAppIGW
 
   PublicSubnet1RouteTableAssoc:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -142,7 +142,7 @@ Resources:
   PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       Tags:
         - Key: Name
           Value: !Sub ${AppName}-private-rt-1
@@ -158,7 +158,7 @@ Resources:
   PrivateRouteTable2:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       Tags:
         - Key: Name
           Value: !Sub ${AppName}-private-rt-2
@@ -175,7 +175,7 @@ Resources:
   S3Endpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
       VpcEndpointType: Gateway
       RouteTableIds:
@@ -192,9 +192,7 @@ Resources:
               - "s3:DeleteObject"
               - "s3:ListBucket"
             Resource:
-              - !Sub "arn:aws:s3:::${S3BucketName}"
               - !Sub "arn:aws:s3:::${S3BucketName}/*"
-              - !Sub "arn:aws:s3:::prod-${AWS::Region}-starport-layer-bucket/*"
       Tags:
         - Key: Name
           Value: !Sub ${AppName}-s3-endpoint
@@ -205,7 +203,7 @@ Resources:
   ECRApiEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
       VpcEndpointType: Interface
       SubnetIds:
@@ -223,7 +221,7 @@ Resources:
   ECRDkrEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
       VpcEndpointType: Interface
       SubnetIds:
@@ -241,7 +239,7 @@ Resources:
   CWLogsEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcId: !Ref GalleryVPC
+      VpcId: !Ref TodoAppVPC
       ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
       VpcEndpointType: Interface
       SubnetIds:
@@ -258,7 +256,7 @@ Resources:
 
 Outputs:
   VPCId:
-    Value: !Ref GalleryVPC
+    Value: !Ref TodoAppVPC
     Export:
       Name: !Sub ${AppName}-vpc
 
