@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Root Stack for ECS Go and Angular TodoApp App with S3, Auto Scaling, ALB, CodePipeline
+Description: Root Stack for ECS Go and Angular TodoApp App with DynamoDB, Auto Scaling, ALB, and CodePipeline
 
 Parameters:
   AppName:
     Type: String
-    Default: TodoApp
+    Default: todo-app
   LabTag:
     Type: String
     Default: week7_lab
