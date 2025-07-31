@@ -35,7 +35,7 @@ Resources:
         AppName: !Ref AppName
         LabTag: !Ref LabTag
         VPCId: !GetAtt TodoAppVPCStack.Outputs.VPCId
-        VPCEndpointSG: !GetAtt TodoAppVPCStack.Outputs.VPCEndpointSG
+        # VPCEndpointSG: !GetAtt TodoAppVPCStack.Outputs.VPCEndpointSG
 
   # TodoApp ECS Application Stack
   TodoAppECSAppStack:
