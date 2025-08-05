@@ -35,12 +35,10 @@ Resources:
         AppName: !Ref AppName
         LabTag: !Ref LabTag
         VPCId: !GetAtt TodoAppVPCStack.Outputs.VPCId
-        # VPCEndpointSG: !GetAtt TodoAppVPCStack.Outputs.VPCEndpointSG
 
   # TodoApp ECS Application Stack
   TodoAppECSAppStack:
     Type: AWS::CloudFormation::Stack
-    # DependsOn: TodoAppRDSStack
     Properties:
       TemplateURL: !Sub "${TemplateS3BaseURL}/alb.yaml"
       Parameters:

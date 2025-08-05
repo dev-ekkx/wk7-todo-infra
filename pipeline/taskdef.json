@@ -11,7 +11,7 @@
   "containerDefinitions": [
     {
       "name": "todo-app-container",
-      "image": "124355655853.dkr.ecr.eu-west-1.amazonaws.com/wk-7-todo-app:latest",
+      "image": "124355655853.dkr.ecr.eu-west-1.amazonaws.com/wk-7-todo-app-repo:latest",
       "portMappings": [
         {
           "containerPort": 8081,

@@ -154,12 +154,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Scan
-                  - dynamodb:Query
+                  - dynamodb:*
                 Resource:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TodoItems
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/TodoItems/index/*
