@@ -372,31 +372,37 @@ Outputs:
   AppLoadBalancerDNS:
     Description: TodoApp ALB DNS to access app
     Value: !GetAtt TodoAppLoadBalancer.DNSName
+
   ClusterName:
     Description: Name of the TodoApp ECS Cluster
     Value: !Ref TodoAppECSCluster
     Export:
       Name: !Sub ${AppName}-ecs-cluster
+
   ServiceName:
     Description: TodoApp ECS Service Name
     Value: !Sub ${AppName}-ecs-service
     Export:
       Name: !Sub ${AppName}-ecs-service
+
   BlueTargetGroupName:
     Description: Name of the first TodoApp target group
     Value: !GetAtt TodoAppTargetGroup.TargetGroupName
     Export:
       Name: BlueTargetGroupName
+
   GreenTargetGroupName:
     Description: Name of the second TodoApp target group
     Value: !GetAtt TodoAppTargetGroup2.TargetGroupName
     Export:
       Name: GreenTargetGroupName
+
   ALBListenerArn:
     Description: ARN of the TodoApp Load Balancer Listener
     Value: !Ref TodoAppListener
     Export:
       Name: ALBListenerArn
+
   TaskExecRoleArn:
     Description: ARN of the TodoApp TaskExecutionRole
     Value: !Ref TodoAppTaskExecutionRole
