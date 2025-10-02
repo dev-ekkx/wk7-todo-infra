@@ -85,14 +85,15 @@ Resources:
                 - !Ref ListenerArn
       ECSServices:
         - ClusterName: !Ref ClusterName
-          ServiceName: !Ref ServiceName          
-
+          ServiceName: !Ref ServiceName
+            
 Outputs:
   CodeDeployAppName:
     Description: 'TodoApp CodeDeploy Application for ECS Blue/Green'
     Value: !Ref TodoAppCodeDeployApp
     Export:
       Name: !Sub ${AppName}-codedeploy-app
+
   CodeDeployDeploymentGroupName:
     Description: 'TodoApp Deployment Group for ECS Blue/Green'
     Value: !Ref TodoAppCodeDeployDeploymentGroup
